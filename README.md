@@ -1,2 +1,1 @@
-# VisualStudio
-C++
+# Dota2JS
