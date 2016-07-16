@@ -125,7 +125,7 @@ function AutoUseF() {
         if (phase == true)
             if (CDPhase == 0)
                 if (!Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
-                    Game.CastNoTarget(User, Phase, false)
+                    Game.CastNoTarget(User, Phase, true)
     }
 
     // Если есть Стики и включены, то они автоматически юзаются при достижении 150(Magick Stick) и 100(Magick Wand)
@@ -259,7 +259,7 @@ var AutoUseCheck = function () {
     Toggler()
     Func()
     Game.ScriptLogMsg('Script enabled: AutoUse', '#00ff00')
-    GameEvents.SendEventClientSide('antiaddiction_toast', { "message": "Автор: LalkaKaro4; Информация: АвтоФайзы + Автостики + АвтоБотл + АвтоУрна(на себя) + Мека + Грейвсы", "duration": "4" })
+    GameEvents.SendEventClientSide('antiaddiction_toast', { "message": "Автор: LalkaKaro4; Информация: АвтоФайзы + АвтоСтики + АвтоБотл + АвтоУрна(на себя) + Мека + Грейвсы", "duration": "4" })
 }
 
 
