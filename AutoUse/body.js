@@ -30,7 +30,8 @@ var Items = [
 
 var Buffs = [
     'modifier_item_mekansm_noheal',
-    'modifier_fountain_aura_buff'
+    'modifier_fountain_aura_buff',
+    'modifier_teleporting'
 ]
 
 function Toggler() {
@@ -83,20 +84,21 @@ function AutoUseF() {
             Game.ScriptLogMsg('Script disabled: Not have item', '#ff0000')
             return
         }
-        */
+        
     if (!AutoUse.checked) {
         try {
             Game.Panels.ItemsPanel.DeleteAsync(0)
         } catch (e) { }
         return
     }
+
     var AbPanel = Game.Panels.RubickAutoSteal.Children()
     var z = []
     for (i in AbPanel)
         if (AbPanel[i].style.opacity == 1 || AbPanel[i].style.opacity == null)
             z.push(AbPanel[i].Children()[0].abilityname)
 
-
+*/
     var User = Players.GetPlayerHeroEntityIndex(Game.GetLocalPlayerID())
     var UserBuffs = Game.GetBuffsNames(User)
 
@@ -122,7 +124,7 @@ function AutoUseF() {
     if (Entities.HasItemInInventory(User, 'item_phase_boots')) {
         if (phase == true)
             if (CDPhase == 0)
-                if (!Entities.IsInvisible(User))
+                if (!Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
                     Game.CastNoTarget(User, Phase, false)
     }
 
@@ -131,11 +133,11 @@ function AutoUseF() {
         if (stick == true) {
             if (CDStick == 0)
                 // Magick Stick
-                if ((Entities.GetHealth(User) <= 150) && (HP > Entities.GetHealth(User)) && !Entities.IsInvisible(User))
+                if ((Entities.GetHealth(User) <= 150) && (HP > Entities.GetHealth(User)) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs))
                     Game.CastNoTarget(User, Stick, false)
             if (CDWand == 0)
                 // Magick Wand
-                if ((Entities.GetHealth(User) <= 100) && (HP > Entities.GetHealth(User)) && !Entities.IsInvisible(User))
+                if ((Entities.GetHealth(User) <= 100) && (HP > Entities.GetHealth(User)) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs))
                     Game.CastNoTarget(User, Wand, false)
         }
 
@@ -157,14 +159,14 @@ function AutoUseF() {
     // Если есть Урна и включена, то они автоматически юзаются при достежении 150 хп
     if (Entities.HasItemInInventory(User, 'item_urn_of_shadows')) {
         if (urn == true)
-            if ((Entities.GetHealth(User) <= 150) && (HP > Entities.GetHealth(User) && !Entities.IsInvisible(User)))
+            if ((Entities.GetHealth(User) <= 150) && (HP > Entities.GetHealth(User) && !Entities.IsInvisible(User)) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
                 Game.CastTarget(User, Urn, User, false)
     }
 
     // Если есть Ботл и включен, то он автоматически юзаются на фонтане
     if (Entities.HasItemInInventory(User, 'item_bottle')) {
         if (bottle == true)
-            if (!Game.IntersecArrays(UserBuffs, ["modifier_bottle_regeneration"]) && Game.IntersecArrays(UserBuffs, ['modifier_fountain_aura_buff']))
+            if (!Game.IntersecArrays(UserBuffs, ["modifier_bottle_regeneration"]) && Game.IntersecArrays(UserBuffs, ['modifier_fountain_aura_buff']) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
                 Game.CastNoTarget(User, Bottle, false)
     }
 
