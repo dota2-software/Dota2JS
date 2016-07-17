@@ -1,14 +1,15 @@
-﻿/*-----------------------------------------------
-/////////////////////////////////////////////////
+﻿/*-------------------------------------------------
+///////////////////////////////////////////////////
 АвтоФайзы, АвтоБотл, АвтоСтики, АвтоМека, АвтоУрна
 Автор: vk.com/lalka_karo4
-/////////////////////////////////////////////////
------------------------End---------------------*/
+///////////////////////////////////////////////////
+-----------------------End-----------------------*/
 
+/*
 try {
     Game.Panels.ItemsPanel.DeleteAsync(0)
 } catch (e) { }
-
+*/
 var interval = 0.1
 var HP = 0
 
@@ -17,6 +18,8 @@ stick = true;
 bottle = true;
 urn = true;
 meka = true;
+
+
 
 var Items = [
     'item_magic_stick',
@@ -41,7 +44,6 @@ function Toggler() {
             phase = false
         else
             phase = true
-        //Game.PhaseBootsToggler()
     }, "", 0)
 
     Game.AddCommand("__Stick_Toggle", function () {
@@ -73,10 +75,26 @@ function Toggler() {
     }, '', 0)
 }
 
-
+var User = Players.GetPlayerHeroEntityIndex(Game.GetLocalPlayerID())
 function AutoUseF() {
+    if (!AutoUse.checked)
+        return
+
+    
+    var UserBuffs = Game.GetBuffsNames(User)
+
+    // Получение предметов 
+    var Stick = Game.GetAbilityByName(User, 'item_magic_stick')
+    var Wand = Game.GetAbilityByName(User, 'item_magic_wand')
+    var Phase = Game.GetAbilityByName(User, 'item_phase_boots')
+    var Bottle = Game.GetAbilityByName(User, 'item_bottle')
+    var Urn = Game.GetAbilityByName(User, 'item_urn_of_shadows')
+    var Meka = Game.GetAbilityByName(User, 'item_mekansm')
+    var Greaves = Game.GetAbilityByName(User, 'item_guardian_greaves')
+
+
     // Проверка на один из предметов, если нет, то возвращаемся
-    /*
+    /* 
     for (var i in Items) {
         var hasItem = Entities.HasItemInInventory(User, Items[i])
         if (!hasItem) {
@@ -84,6 +102,7 @@ function AutoUseF() {
             Game.ScriptLogMsg('Script disabled: Not have item', '#ff0000')
             return
         }
+    }
         
     if (!AutoUse.checked) {
         try {
@@ -97,37 +116,88 @@ function AutoUseF() {
     for (i in AbPanel)
         if (AbPanel[i].style.opacity == 1 || AbPanel[i].style.opacity == null)
             z.push(AbPanel[i].Children()[0].abilityname)
+    */
 
-*/
-    var User = Players.GetPlayerHeroEntityIndex(Game.GetLocalPlayerID())
-    var UserBuffs = Game.GetBuffsNames(User)
+    // Если Файзы есть в инвентаре
+    if (Game.GetAbilityByName(User, 'item_phase_boots') != -1) {
+        // Если включены
+        if (phase == true) {
+            // Если нет кд
+            if (Abilities.IsCooldownReady(Phase))
+                // Если гейрой не в инвизе и не телепортируется
+                if (!Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
+                    // Каст предмета
+                    Game.CastNoTarget(User, Phase, false)
+        }
+    }
 
-    // Получение предметов 
-    var Stick = Game.GetAbilityByName(User, 'item_magic_stick')
-    var Wand = Game.GetAbilityByName(User, 'item_magic_wand')
-    var Phase = Game.GetAbilityByName(User, 'item_phase_boots')
-    var Bottle = Game.GetAbilityByName(User, 'item_bottle')
-    var Urn = Game.GetAbilityByName(User, 'item_urn_of_shadows')
-    var Meka = Game.GetAbilityByName(User, 'item_mekansm')
-    var Greaves = Game.GetAbilityByName(User, 'item_guardian_greaves')
+    // Если Стики есть в инвентаре
+    if ((Game.GetAbilityByName(User, 'item_magic_stick') || (Game.GetAbilityByName(User, 'item_magic_wand'))) != -1) {
+        // Если включены
+        if (stick == true) {
+            // Если нет кд и есть хоть один заряд
+            if (Abilities.IsCooldownReady(Stick) && (Abilities.GetCurrentCharges(Stick) >0))
+                // Magick Stick - если порог 150 хп + герой не в инвизе + Баффы
+                if ((Entities.GetHealth(User) <= 150) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs))
+                    Game.CastNoTarget(User, Stick, false)
+            // Если нет кд
+            if (Abilities.IsCooldownReady(Wand) && (Abilities.GetCurrentCharges(Wand) > 0))
+                // Magick Wand - если порог 100 хп + герой не в инвизе + Баффы
+                if ((Entities.GetHealth(User) <= 100) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs))
+                    Game.CastNoTarget(User, Wand, false)
+        }
+    }
 
-    //Получение Cooldown предметов
-    var CDPhase = Abilities.GetCooldownTimeRemaining(Phase)
-    var CDStick = Abilities.GetCooldownTimeRemaining(Stick)
-    var CDWand = Abilities.GetCooldownTimeRemaining(Wand)
-    var CDMeka = Abilities.GetCooldownTimeRemaining(Meka)
-    var CDUrn = Abilities.GetCooldownTimeRemaining(Urn)
-    var CDGreaves = Abilities.GetCooldownTimeRemaining(Greaves)
+    // Если Мека есть в инвентаре
+    if ((Game.GetAbilityByName(User, 'item_mekansm') || (Game.GetAbilityByName(User, 'item_guardian_greaves'))) != 1) {
+        // Если включена
+        if (meka == true) {
+            // Если нет кд
+            if (Abilities.IsCooldownReady(Meka) && Abilities.IsOwnersManaEnough(Meka))
+                // Mekansm - если порог 200 хп + герой не в инвизе + Баффы
+                if ((Entities.GetHealth(User) <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs))
+                    Game.CastNoTarget(User, Meka, false)
+            // Если нет кд
+            if (Abilities.IsCooldownReady(Greaves) && Abilities.IsOwnersManaEnough(Greaves))
+                // Guardian Greaves - если порог 200 хп + герой не в инвизе + Баффы
+                if ((Entities.GetHealth(User) <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs))
+                    Game.CastNoTarget(User, Greaves, false)
+        }
+    }
 
+    // Если Урна есть в инвентаре
+    if (Game.GetAbilityByName(User, 'item_urn_of_shadows') != -1) {
+        // Если Включена
+        if (urn == true) {
+            // Если нет кд
+            if (Abilities.IsCooldownReady(Urn) && (Abilities.GetCurrentCharges(Urn) > 0))
+                // Urn Of Shadows - на себя если порог 200 хп + герой не в инвизе + Баффы
+                if ((Entities.GetHealth(User) <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
+                    Game.CastTarget(User, Urn, User, false)
+        }
+    }
 
-    // Если есть Файзы и включены, то он автоматически юзаются
+    // Если есть в инвентаре
+    if (Game.GetAbilityByName(User, 'item_bottle') != 1) {
+        // Если Ботл включен
+        if (bottle == true) {
+            // Если нет кд
+            if (Abilities.IsCooldownReady(Bottle))
+                // Если нет бафа на реген от ботла + есть бафф от фонтана + нет баффа телепортации
+                if (!Game.IntersecArrays(UserBuffs, ["modifier_bottle_regeneration"]) && Game.IntersecArrays(UserBuffs, ['modifier_fountain_aura_buff']) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
+                    Game.CastNoTarget(User, Bottle, false)
+        }
+    }
+
+    //Старый код
+    /*
     if (Entities.HasItemInInventory(User, 'item_phase_boots')) {
         if (phase == true)
             if (CDPhase == 0)
                 if (!Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
-                    Game.CastNoTarget(User, Phase, true)
+                    Game.CastNoTarget(User, Phase, 1)
     }
-
+    
     // Если есть Стики и включены, то они автоматически юзаются при достижении 150(Magick Stick) и 100(Magick Wand)
     if ((Entities.HasItemInInventory(User, 'item_magic_stick')) || (Entities.HasItemInInventory(User, 'item_magic_wand'))) 
         if (stick == true) {
@@ -170,46 +240,8 @@ function AutoUseF() {
                 Game.CastNoTarget(User, Bottle, false)
     }
 
-
-    //Старый код, не лучшая реализация
-    /*
-    // Если Файзы включены, то они автоматически юзаются
-    if (phase == true) {
-        if (CDPhase == 0 && !Entities.IsInvisible(User))
-            Game.CastNoTarget(User, Phase, false)
-    }
-    */
-    /*
-    // Если Стики включены, то они автоматически юзаются
-    if (stick == true) {
-        // Magick Stick
-        if ((Entities.GetHealth(User) <= 150) && (HP > Entities.GetHealth(User)) && !Entities.IsInvisible(User))
-            Game.CastNoTarget(User, Stick, false)
-        // Magick Wand
-        if ((Entities.GetHealth(User) <= 100) && (HP > Entities.GetHealth(User)) && !Entities.IsInvisible(User))
-            Game.CastNoTarget(User, Wand, false)
-    }
-    if (meka == true) {
-        // Если Мека включена, то она автоматически юзаются
-        if (CDMeka == 0 && (Entities.GetHealth(User) <= 150) && (HP > Entities.GetHealth(User) && !Entities.IsInvisible(User)) && !Game.IntersecArrays(UserBuffs, Buffs))
-            Game.CastNoTarget(User, Meka, false)
-        // Если Грейвсы включены, то они автоматически юзаются
-        if (CDGreaves == 0 && (Entities.GetHealth(User) <= 150) && (HP > Entities.GetHealth(User) && !Entities.IsInvisible(User)) && !Game.IntersecArrays(UserBuffs, Buffs))
-            Game.CastNoTarget(User, Greaves, false)
-    }
-    if (urn == true) {
-        // Если Урна включен, то они автоматически юзаются
-        if ((Entities.GetHealth(User) <= 150) && (HP > Entities.GetHealth(User) && !Entities.IsInvisible(User)))
-            Game.CastTarget(User, Urn, User, false)
-    }
-    if (bottle == true) {
-        // Если Ботл включен, то они автоматически юзаются
-        if (!Game.IntersecArrays(UserBuffs, ["modifier_bottle_regeneration"]) && Game.IntersecArrays(UserBuffs, ['modifier_fountain_aura_buff']))
-            Game.CastNoTarget(User, Bottle, false)
-    }
     */
 
-    HP = Entities.GetHealth(User)
 }
 
 /*
@@ -259,7 +291,7 @@ var AutoUseCheck = function () {
     Toggler()
     Func()
     Game.ScriptLogMsg('Script enabled: AutoUse', '#00ff00')
-    GameEvents.SendEventClientSide('antiaddiction_toast', { "message": "Автор: LalkaKaro4; Информация: АвтоФайзы + АвтоСтики + АвтоБотл + АвтоУрна(на себя) + Мека + Грейвсы", "duration": "4" })
+    GameEvents.SendEventClientSide('antiaddiction_toast', { "message": "Автор: LalkaKaro4 \nИнформация: АвтоФайзы + АвтоСтики + АвтоБотл + АвтоУрна(на себя) + Мека + Грейвсы", "duration": "5" })
 }
 
 
