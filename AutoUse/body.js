@@ -31,6 +31,12 @@ var Items = [
     'item_guardian_greaves'
 ]
 
+var ImportantBuffs = [
+    'modifier_teleporting',
+    'modifier_tinker_rearm',
+    //бх, рики, вивер, енигма блекхол, бейн ульта, задувка котла, связка шамана, тп фуры, пудж дизмембер, ск эпицентр, цм ульт, варлок 3, 
+]
+
 var Buffs = [
     'modifier_item_mekansm_noheal',
     'modifier_fountain_aura_buff',
@@ -75,12 +81,17 @@ function Toggler() {
     }, '', 0)
 }
 
-var User = Players.GetPlayerHeroEntityIndex(Game.GetLocalPlayerID())
+
 function AutoUseF() {
     if (!AutoUse.checked)
         return
-
-    
+    /*
+    for (var i = 0; i < array.length; i++)
+    {
+        array[i]
+    }
+    */
+    var User = Players.GetPlayerHeroEntityIndex(Game.GetLocalPlayerID())
     var UserBuffs = Game.GetBuffsNames(User)
 
     // Получение предметов 
@@ -125,7 +136,7 @@ function AutoUseF() {
             // Если нет кд
             if (Abilities.IsCooldownReady(Phase))
                 // Если гейрой не в инвизе и не телепортируется
-                if (!Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
+                if (!Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
                     // Каст предмета
                     Game.CastNoTarget(User, Phase, false)
         }
@@ -138,12 +149,12 @@ function AutoUseF() {
             // Если нет кд и есть хоть один заряд
             if (Abilities.IsCooldownReady(Stick) && (Abilities.GetCurrentCharges(Stick) >0))
                 // Magick Stick - если порог 150 хп + герой не в инвизе + Баффы
-                if ((Entities.GetHealth(User) <= 150) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs))
+                if ((Entities.GetHealth(User) <= 150) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
                     Game.CastNoTarget(User, Stick, false)
             // Если нет кд
             if (Abilities.IsCooldownReady(Wand) && (Abilities.GetCurrentCharges(Wand) > 0))
                 // Magick Wand - если порог 100 хп + герой не в инвизе + Баффы
-                if ((Entities.GetHealth(User) <= 100) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs))
+                if ((Entities.GetHealth(User) <= 100) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
                     Game.CastNoTarget(User, Wand, false)
         }
     }
@@ -155,12 +166,12 @@ function AutoUseF() {
             // Если нет кд
             if (Abilities.IsCooldownReady(Meka) && Abilities.IsOwnersManaEnough(Meka))
                 // Mekansm - если порог 200 хп + герой не в инвизе + Баффы
-                if ((Entities.GetHealth(User) <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs))
+                if ((Entities.GetHealth(User) <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
                     Game.CastNoTarget(User, Meka, false)
             // Если нет кд
             if (Abilities.IsCooldownReady(Greaves) && Abilities.IsOwnersManaEnough(Greaves))
                 // Guardian Greaves - если порог 200 хп + герой не в инвизе + Баффы
-                if ((Entities.GetHealth(User) <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs))
+                if ((Entities.GetHealth(User) <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
                     Game.CastNoTarget(User, Greaves, false)
         }
     }
@@ -172,7 +183,7 @@ function AutoUseF() {
             // Если нет кд
             if (Abilities.IsCooldownReady(Urn) && (Abilities.GetCurrentCharges(Urn) > 0))
                 // Urn Of Shadows - на себя если порог 200 хп + герой не в инвизе + Баффы
-                if ((Entities.GetHealth(User) <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
+                if ((Entities.GetHealth(User) <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
                     Game.CastTarget(User, Urn, User, false)
         }
     }
@@ -184,7 +195,7 @@ function AutoUseF() {
             // Если нет кд
             if (Abilities.IsCooldownReady(Bottle))
                 // Если нет бафа на реген от ботла + есть бафф от фонтана + нет баффа телепортации
-                if (!Game.IntersecArrays(UserBuffs, ["modifier_bottle_regeneration"]) && Game.IntersecArrays(UserBuffs, ['modifier_fountain_aura_buff']) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
+                if (!Game.IntersecArrays(UserBuffs, ["modifier_bottle_regeneration"]) && Game.IntersecArrays(UserBuffs, ['modifier_fountain_aura_buff']) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
                     Game.CastNoTarget(User, Bottle, false)
         }
     }
