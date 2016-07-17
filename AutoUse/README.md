@@ -14,9 +14,13 @@
 Если вы хотите выключить что-то из предметов, то пропишите в консоле:
 
 __PhaseBoots_Toggle - Включает/Отключает Файзы
+
 __MagicStick_Toggle - Включает/Отключает Magick Stick + Magick Wand
+
 __Bottle_Toggle - Включает/Отключает Ботл
+
 __UrnOfShadows_Toggle - Включает/Отключает Урну
+
 __MekaAndGreaves_Toggle - Включает/Отключает Меку + Грейвсы
 
 
