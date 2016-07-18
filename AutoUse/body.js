@@ -10,9 +10,13 @@ try {
     Game.Panels.ItemsPanel.DeleteAsync(0)
 } catch (e) { }
 */
-var interval = 0.1
-var HP = 0
 
+
+
+var interval = 0.1
+
+
+notItems = false;
 phase = true;
 stick = true;
 bottle = true;
@@ -20,8 +24,7 @@ urn = true;
 meka = true;
 
 
-
-var Items = [
+var HasItems = [
     'item_magic_stick',
     'item_magic_wand',
     'item_phase_boots',
@@ -34,6 +37,7 @@ var Items = [
 var ImportantBuffs = [
     'modifier_teleporting',
     'modifier_tinker_rearm',
+    'modifier_item_armlet_unholy_strength'
     //бх, рики, вивер, енигма блекхол, бейн ульта, задувка котла, связка шамана, тп фуры, пудж дизмембер, ск эпицентр, цм ульт, варлок 3, 
 ]
 
@@ -82,18 +86,20 @@ function Toggler() {
 }
 
 
+
 function AutoUseF() {
-    if (!AutoUse.checked)
-        return
+
+    var User = Players.GetPlayerHeroEntityIndex(Game.GetLocalPlayerID())
+    var Inv = Game.GetInventory(User)
+    var UserBuffs = Game.GetBuffsNames(User)
+
     /*
     for (var i = 0; i < array.length; i++)
     {
         array[i]
     }
     */
-    var User = Players.GetPlayerHeroEntityIndex(Game.GetLocalPlayerID())
-    var UserBuffs = Game.GetBuffsNames(User)
-
+    
     // Получение предметов 
     var Stick = Game.GetAbilityByName(User, 'item_magic_stick')
     var Wand = Game.GetAbilityByName(User, 'item_magic_wand')
@@ -103,18 +109,103 @@ function AutoUseF() {
     var Meka = Game.GetAbilityByName(User, 'item_mekansm')
     var Greaves = Game.GetAbilityByName(User, 'item_guardian_greaves')
 
+    var UrnRange = Abilities.GetCastRange(Urn)
+    if (Entities.HasItemInInventory(User, 'item_aether_lens'))
+        UrnRange += 200
+    var BottleRange =  Abilities.GetCastRange(Bottle)
 
-    // Проверка на один из предметов, если нет, то возвращаемся
-    /* 
-    for (var i in Items) {
-        var hasItem = Entities.HasItemInInventory(User, Items[i])
-        if (!hasItem) {
-            AutoUse.checked = false;
-            Game.ScriptLogMsg('Script disabled: Not have item', '#ff0000')
-            return
+    var HEnts = Game.PlayersHeroEnts()
+    //Поиск героев без иллюзий
+    for (i in HEnts) {
+        var ent = parseInt(HEnts[i])
+
+        //Если противник, юнит мертв, наш герой в инвизе, то ищем дальше
+        if (Entities.IsEnemy(ent))
+            continue
+        // Получаем ХП юнита
+        var HP = Entities.GetHealth(ent)
+
+        var entBuffs = Game.GetBuffsNames(ent)
+
+        var Range = Entities.GetRangeToUnit(User, ent)
+        // Если Мека есть в инвентаре
+        if ((Game.GetAbilityByName(User, 'item_mekansm') || (Game.GetAbilityByName(User, 'item_guardian_greaves'))) != 1) {
+            // Если включена
+            if (meka == true)
+                //Если есть бафф ауры меки на герое
+                if (Game.IntersecArrays(entBuffs, ['modifier_item_mekansm_aura'])) {
+                    // Если нет кд
+                    if (Abilities.IsCooldownReady(Meka) && Abilities.IsOwnersManaEnough(Meka))
+                        // Mekansm - если порог 150 хп + герой не в инвизе + Баффы
+                        if ((HP <= 150) && !Entities.IsInvisible(User) && !Game.IntersecArrays(entBuffs, Buffs) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
+                            Game.CastNoTarget(User, Meka, false)
+                    // Если нет кд
+                    if (Abilities.IsCooldownReady(Greaves) && Abilities.IsOwnersManaEnough(Greaves))
+                        // Guardian Greaves - если порог 200 хп + герой не в инвизе + Баффы
+                        if ((HP <= 150) && !Entities.IsInvisible(User) && !Game.IntersecArrays(entBuffs, Buffs) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
+                            Game.CastNoTarget(User, Greaves, false)
+                }
+        }
+
+        // Если Урна есть в инвентаре
+        if (Game.GetAbilityByName(User, 'item_urn_of_shadows') != -1) {
+            // Если Включена
+            if (urn == true) {
+                if (Range < UrnRange)
+                // Если нет кд и есть хоть один заряд
+                if (Abilities.IsCooldownReady(Urn) && (Abilities.GetCurrentCharges(Urn) > 0))
+                    // Urn Of Shadows - на себя или собзника если порог 200 хп + герой не в инвизе + Баффы
+                    if ((HP <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
+                        Game.CastTarget(User, Urn, ent, false)
+            }
+        }
+
+        // Если Ботл есть в инвентаре
+        if (Game.GetAbilityByName(User, 'item_bottle') != 1) {
+            // Если Ботл включен
+            if (bottle == true) {
+                // Сравниваем с ренджом Ботла
+                if (Range < BottleRange)
+                    // Если нет кд
+                    if (Abilities.IsCooldownReady(Bottle))
+                        // Если хп = фулл хп, нет бафа на реген от ботла + есть бафф от фонтана + нет баффа телепортации
+                        if (!(Entities.GetHealth(ent) == Entities.GetMaxHealth(ent)) && !Game.IntersecArrays(entBuffs, ["modifier_bottle_regeneration"]) && Game.IntersecArrays(UserBuffs, ['modifier_fountain_aura_buff']) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
+                            Game.CastTarget(User, Bottle, ent, false)
+            }
         }
     }
-        
+    
+    // Если Стики есть в инвентаре
+    if ((Game.GetAbilityByName(User, 'item_magic_stick') || (Game.GetAbilityByName(User, 'item_magic_wand'))) != -1) {
+        // Если включены
+        if (stick == true) {
+            // Если нет кд и есть хоть один заряд
+            if (Abilities.IsCooldownReady(Stick) && (Abilities.GetCurrentCharges(Stick) > 1))
+                // Magick Stick - если порог 150 хп + герой не в инвизе + Баффы
+                if ((Entities.GetHealth(User) <= 150) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
+                    Game.CastNoTarget(User, Stick, false)
+            // Если нет кд и есть хоть один заряд
+            if (Abilities.IsCooldownReady(Wand) && (Abilities.GetCurrentCharges(Wand) > 0))
+                // Magick Wand - если порог 100 хп + герой не в инвизе + Баффы
+                if ((Entities.GetHealth(User) <= 100) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
+                    Game.CastNoTarget(User, Wand, false)
+        }
+    }
+    
+    // Если Файзы есть в инвентаре
+    if (Game.GetAbilityByName(User, 'item_phase_boots') != -1) {
+        // Если включены
+        if (phase == true) {
+            // Если нет кд
+            if (Abilities.IsCooldownReady(Phase))
+                // Если гейрой не в инвизе и не телепортируется
+                if (!Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ImportantBuffs) && Entities.IsMoving(User))
+                    // Каст предмета
+                    Game.CastNoTarget(User, Phase, false)
+        }
+    }
+
+    /*
     if (!AutoUse.checked) {
         try {
             Game.Panels.ItemsPanel.DeleteAsync(0)
@@ -127,130 +218,6 @@ function AutoUseF() {
     for (i in AbPanel)
         if (AbPanel[i].style.opacity == 1 || AbPanel[i].style.opacity == null)
             z.push(AbPanel[i].Children()[0].abilityname)
-    */
-
-    // Если Файзы есть в инвентаре
-    if (Game.GetAbilityByName(User, 'item_phase_boots') != -1) {
-        // Если включены
-        if (phase == true) {
-            // Если нет кд
-            if (Abilities.IsCooldownReady(Phase))
-                // Если гейрой не в инвизе и не телепортируется
-                if (!Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
-                    // Каст предмета
-                    Game.CastNoTarget(User, Phase, false)
-        }
-    }
-
-    // Если Стики есть в инвентаре
-    if ((Game.GetAbilityByName(User, 'item_magic_stick') || (Game.GetAbilityByName(User, 'item_magic_wand'))) != -1) {
-        // Если включены
-        if (stick == true) {
-            // Если нет кд и есть хоть один заряд
-            if (Abilities.IsCooldownReady(Stick) && (Abilities.GetCurrentCharges(Stick) >0))
-                // Magick Stick - если порог 150 хп + герой не в инвизе + Баффы
-                if ((Entities.GetHealth(User) <= 150) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
-                    Game.CastNoTarget(User, Stick, false)
-            // Если нет кд
-            if (Abilities.IsCooldownReady(Wand) && (Abilities.GetCurrentCharges(Wand) > 0))
-                // Magick Wand - если порог 100 хп + герой не в инвизе + Баффы
-                if ((Entities.GetHealth(User) <= 100) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
-                    Game.CastNoTarget(User, Wand, false)
-        }
-    }
-
-    // Если Мека есть в инвентаре
-    if ((Game.GetAbilityByName(User, 'item_mekansm') || (Game.GetAbilityByName(User, 'item_guardian_greaves'))) != 1) {
-        // Если включена
-        if (meka == true) {
-            // Если нет кд
-            if (Abilities.IsCooldownReady(Meka) && Abilities.IsOwnersManaEnough(Meka))
-                // Mekansm - если порог 200 хп + герой не в инвизе + Баффы
-                if ((Entities.GetHealth(User) <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
-                    Game.CastNoTarget(User, Meka, false)
-            // Если нет кд
-            if (Abilities.IsCooldownReady(Greaves) && Abilities.IsOwnersManaEnough(Greaves))
-                // Guardian Greaves - если порог 200 хп + герой не в инвизе + Баффы
-                if ((Entities.GetHealth(User) <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
-                    Game.CastNoTarget(User, Greaves, false)
-        }
-    }
-
-    // Если Урна есть в инвентаре
-    if (Game.GetAbilityByName(User, 'item_urn_of_shadows') != -1) {
-        // Если Включена
-        if (urn == true) {
-            // Если нет кд
-            if (Abilities.IsCooldownReady(Urn) && (Abilities.GetCurrentCharges(Urn) > 0))
-                // Urn Of Shadows - на себя если порог 200 хп + герой не в инвизе + Баффы
-                if ((Entities.GetHealth(User) <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
-                    Game.CastTarget(User, Urn, User, false)
-        }
-    }
-
-    // Если есть в инвентаре
-    if (Game.GetAbilityByName(User, 'item_bottle') != 1) {
-        // Если Ботл включен
-        if (bottle == true) {
-            // Если нет кд
-            if (Abilities.IsCooldownReady(Bottle))
-                // Если нет бафа на реген от ботла + есть бафф от фонтана + нет баффа телепортации
-                if (!Game.IntersecArrays(UserBuffs, ["modifier_bottle_regeneration"]) && Game.IntersecArrays(UserBuffs, ['modifier_fountain_aura_buff']) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
-                    Game.CastNoTarget(User, Bottle, false)
-        }
-    }
-
-    //Старый код
-    /*
-    if (Entities.HasItemInInventory(User, 'item_phase_boots')) {
-        if (phase == true)
-            if (CDPhase == 0)
-                if (!Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
-                    Game.CastNoTarget(User, Phase, 1)
-    }
-    
-    // Если есть Стики и включены, то они автоматически юзаются при достижении 150(Magick Stick) и 100(Magick Wand)
-    if ((Entities.HasItemInInventory(User, 'item_magic_stick')) || (Entities.HasItemInInventory(User, 'item_magic_wand'))) 
-        if (stick == true) {
-            if (CDStick == 0)
-                // Magick Stick
-                if ((Entities.GetHealth(User) <= 150) && (HP > Entities.GetHealth(User)) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs))
-                    Game.CastNoTarget(User, Stick, false)
-            if (CDWand == 0)
-                // Magick Wand
-                if ((Entities.GetHealth(User) <= 100) && (HP > Entities.GetHealth(User)) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, Buffs))
-                    Game.CastNoTarget(User, Wand, false)
-        }
-
-    // Если есть Мека или Грейвсы и включены, то они автоматически юзаются при достежении 150 хп
-    if ((Entities.HasItemInInventory(User, 'item_mekansm')) || (Entities.HasItemInInventory(User, 'item_guardian_greaves')))
-        if (meka == true) {
-            // Если нет кд
-            if (CDMeka == 0)
-                // Mekansm
-                if ((Entities.GetHealth(User) <= 150) && (HP > Entities.GetHealth(User) && !Entities.IsInvisible(User)) && !Game.IntersecArrays(UserBuffs, Buffs))
-                    Game.CastNoTarget(User, Meka, false)
-            // Если нет кд
-            if (CDGreaves == 0)
-                // Guardian Greaves
-                if ((Entities.GetHealth(User) <= 150) && (HP > Entities.GetHealth(User) && !Entities.IsInvisible(User)) && !Game.IntersecArrays(UserBuffs, Buffs))
-                    Game.CastNoTarget(User, Greaves, false)
-        }
-
-    // Если есть Урна и включена, то они автоматически юзаются при достежении 150 хп
-    if (Entities.HasItemInInventory(User, 'item_urn_of_shadows')) {
-        if (urn == true)
-            if ((Entities.GetHealth(User) <= 150) && (HP > Entities.GetHealth(User) && !Entities.IsInvisible(User)) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
-                Game.CastTarget(User, Urn, User, false)
-    }
-
-    // Если есть Ботл и включен, то он автоматически юзаются на фонтане
-    if (Entities.HasItemInInventory(User, 'item_bottle')) {
-        if (bottle == true)
-            if (!Game.IntersecArrays(UserBuffs, ["modifier_bottle_regeneration"]) && Game.IntersecArrays(UserBuffs, ['modifier_fountain_aura_buff']) && !Game.IntersecArrays(UserBuffs, ['modifier_teleporting']))
-                Game.CastNoTarget(User, Bottle, false)
-    }
-
     */
 
 }
@@ -289,6 +256,23 @@ var AutoUseCheck = function () {
         Game.ScriptLogMsg('Script disabled: AutoUse', '#ff0000')
         return
     }
+
+    // Проверка на один из предметов, если нет, то возвращаемся
+    /*
+    for (key in Inv) {
+        var Item = Inv[key]
+        var ItemName = Abilities.GetAbilityName(Item)
+        if (HasItems.indexOf(ItemName) != -1)
+            notItems = true
+    }
+    if (notItems == false) {
+        AutoUse.checked = false
+        Game.ScriptLogMsg('Not Items', '#ff0000')
+        GameEvents.SendEventClientSide('antiaddiction_toast', { "message": "Ни один из предметов не куплен \n\nСкрипт Диактивирован", "duration": "5" })
+        return
+    }
+    */
+
     //циклически замкнутый таймер с проверкой условия с интервалом 'interval'
     function Func() { $.Schedule(interval, function () {
             AutoUseF()
@@ -301,13 +285,9 @@ var AutoUseCheck = function () {
     //Команды для отключения
     Toggler()
     Func()
-    Game.ScriptLogMsg('Script enabled: AutoUse', '#00ff00')
-    GameEvents.SendEventClientSide('antiaddiction_toast', { "message": "Автор: LalkaKaro4 \nИнформация: АвтоФайзы + АвтоСтики + АвтоБотл + АвтоУрна(на себя) + Мека + Грейвсы", "duration": "5" })
+    Game.ScriptLogMsg('Script enabled: AutoUse v0.4', '#00ff00')
+    GameEvents.SendEventClientSide('antiaddiction_toast', { "message": "Автор: LalkaKaro4 - SIP Вор!\nИнформация: АвтоФайзы + АвтоСтики + АвтоБотл + АвтоУрна + Мека + Грейвсы", "duration": "5" })
 }
 
-
-//шаблонное добавление чекбокса в панель
-var Temp = $.CreatePanel("Panel", $('#scripts'), "AutoUse")
-Temp.SetPanelEvent('onactivate', AutoUseCheck)
-Temp.BLoadLayoutFromString('<root><styles><include src="s2r://panorama/styles/dotastyles.vcss_c" /><include src="s2r://panorama/styles/magadan.vcss_c" /></styles><Panel><ToggleButton class="CheckBox" id="AutoUse" text="AutoUse"/></Panel></root>', false, false)
-var AutoUse = $.GetContextPanel().FindChildTraverse('AutoUse').Children()[0]
+//Шаблон для добавление чекбокса
+var AutoUse = Game.AddScript(1, "AutoUse", AutoUseCheck)
