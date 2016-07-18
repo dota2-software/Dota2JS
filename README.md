@@ -1,2 +1,17 @@
-# Dota2JS
-AutoUse - Automatical use PhaseBoots, Stick(Wand), Bottle, Urn Of Shadows and Mekansm(Greaves)
+# Dota2 JS
+
+Русский:
+
+Сценарий           | Функционал                                                 | Версия
+-------------------|------------------------------------------------------------|--------
+AutoUse            | Автоматическое применение:                                 | 0.3.1
+                   | Файзов, Стиков, Ботла, Урны, Меки                          | 
+                   |                                                            |
+
+
+English:
+
+Script             | Functional                                                 | Version
+-------------------|------------------------------------------------------------|--------
+AutoUse            | Automatical use:                                           | 0.3.1
+                   | PhaseBoots, Stick(Wand), Bottle, Urn, and Mekansm(Greaves) |
