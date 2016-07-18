@@ -155,7 +155,7 @@ function AutoUseF() {
                 // Если нет кд и есть хоть один заряд
                 if (Abilities.IsCooldownReady(Urn) && (Abilities.GetCurrentCharges(Urn) > 0))
                     // Urn Of Shadows - на себя или собзника если порог 200 хп + герой не в инвизе + Баффы
-                    if ((HP <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ImportantBuffs))
+                    if ((HP <= 200) && !Entities.IsInvisible(User) && !Game.IntersecArrays(UserBuffs, ImportantBuffs) && !Game.IntersecArrays(UserBuffs, ['modifier_fountain_aura_buff']))
                         Game.CastTarget(User, Urn, ent, false)
             }
         }
